@@ -11,6 +11,7 @@ const TABS = [
   { label: "Products", href: "/admin/products" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Customers", href: "/admin/customers" },
+  { label: "Messages", href: "/admin/messages" },
   { label: "Settings", href: "/admin/settings" },
 ] as const;
 

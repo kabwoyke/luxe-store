@@ -1,67 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Heart, Menu, User } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { NAV_LINKS } from "@/lib/nav";
-import { SearchForm } from "./search-form";
-import { Logo } from "./logo";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { Menu } from "lucide-react";
 
-const rowLink =
-  "flex min-h-11 items-center gap-3 text-sm font-medium text-body hover:text-mauve";
+const loadSheet = () => import("./mobile-menu-sheet");
+const MobileMenuSheet = dynamic(loadSheet, { ssr: false });
 
+/** Hamburger button. The menu itself is fetched once the page is idle, or on first touch, whichever comes first. */
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
-  const close = () => setOpen(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 3000));
+    const id = idle(() => void loadSheet());
+    return () => {
+      if (window.cancelIdleCallback) window.cancelIdleCallback(id as number);
+    };
+  }, []);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger
+    <>
+      <button
+        type="button"
         aria-label="Open menu"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onPointerEnter={() => void loadSheet()}
+        onFocus={() => void loadSheet()}
+        onClick={() => {
+          setMounted(true);
+          setOpen(true);
+        }}
         className="grid size-10 place-items-center rounded-full text-ink hover:bg-blush xl:hidden"
       >
         <Menu className="size-5" />
-      </SheetTrigger>
-      <SheetContent
-        side="left"
-        className="w-[calc(100vw-3rem)] bg-page sm:max-w-sm"
-      >
-        <SheetHeader className="border-b border-border p-5">
-          <SheetTitle>
-            <Logo />
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
-          <SearchForm id="mobile-search" />
-          <nav aria-label="Main menu" className="flex flex-col">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={close}
-                className={`${rowLink} border-b border-border`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex flex-col">
-            <Link href="/wishlist" onClick={close} className={rowLink}>
-              <Heart className="size-4" /> Wishlist
-            </Link>
-            <Link href="/profile" onClick={close} className={rowLink}>
-              <User className="size-4" /> Account / Login
-            </Link>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+      </button>
+      {mounted && <MobileMenuSheet open={open} onOpenChange={setOpen} />}
+    </>
   );
 }

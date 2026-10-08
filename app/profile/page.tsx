@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/session";
 import { OrderItems, StatusBadge, formatOrderDate } from "@/components/orders/order-parts";
 import { PageContainer, PageHeader } from "@/components/shop/page-header";
 
-export const metadata: Metadata = { title: "My account | LUXESTORE" };
+export const metadata: Metadata = { title: "My account", robots: { index: false, follow: false } };
 
 export default function ProfilePage() {
   return (

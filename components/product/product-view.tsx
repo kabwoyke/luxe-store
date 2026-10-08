@@ -196,7 +196,7 @@ export function ProductView({
             onClick={() => {
               if (add()) router.push("/checkout");
             }}
-            className="h-12 flex-1 rounded-full bg-linear-to-r from-pink-500 to-purple-600 px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-12 flex-1 rounded-full bg-linear-to-r from-pink-600 to-purple-700 px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Buy now
           </button>

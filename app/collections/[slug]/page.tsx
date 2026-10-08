@@ -1,10 +1,23 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllProducts, getCollectionBySlug, getProductsForCollection } from "@/lib/catalog";
 import { toCardProduct } from "@/lib/card-product";
 import { GridSkeleton } from "@/components/shop/grid-skeleton";
 import { PageContainer, PageHeader } from "@/components/shop/page-header";
 import { ProductBrowser } from "@/components/shop/product-browser";
+
+export async function generateMetadata({ params }: PageProps<"/collections/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const collection = await getCollectionBySlug(slug);
+  if (!collection) return { title: "Collection not found", robots: { index: false, follow: false } };
+
+  return {
+    title: collection.name,
+    description: collection.description,
+    alternates: { canonical: `/collections/${collection.slug}` },
+  };
+}
 
 export default function CollectionPage({ params }: PageProps<"/collections/[slug]">) {
   return (

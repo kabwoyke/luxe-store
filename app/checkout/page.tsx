@@ -5,7 +5,7 @@ import { PageContainer, PageHeader } from "@/components/shop/page-header";
 import { requireUser } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Checkout | LUXESTORE" };
+export const metadata: Metadata = { title: "Checkout", robots: { index: false, follow: false } };
 
 export default function CheckoutPage() {
   return (

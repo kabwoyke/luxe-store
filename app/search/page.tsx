@@ -7,7 +7,7 @@ import { GridSkeleton } from "@/components/shop/grid-skeleton";
 import { PageContainer, PageHeader } from "@/components/shop/page-header";
 import { ProductBrowser } from "@/components/shop/product-browser";
 
-export const metadata: Metadata = { title: "Search | LUXESTORE" };
+export const metadata: Metadata = { title: "Search", robots: { index: false, follow: false } };
 
 export default function SearchPage({ searchParams }: PageProps<"/search">) {
   return (

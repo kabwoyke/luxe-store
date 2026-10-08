@@ -9,7 +9,7 @@ import { OrderItems, StatusBadge, formatOrderDate } from "@/components/orders/or
 import { PaymentPanel, type PaymentView } from "@/components/orders/payment-panel";
 import { PageContainer } from "@/components/shop/page-header";
 
-export const metadata: Metadata = { title: "Order | LUXESTORE" };
+export const metadata: Metadata = { title: "Order", robots: { index: false, follow: false } };
 
 export default function OrderPage({ params }: PageProps<"/order/[id]">) {
   return (

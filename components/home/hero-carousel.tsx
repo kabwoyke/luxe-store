@@ -73,24 +73,40 @@ function subscribeReducedMotion(callback: () => void) {
 }
 
 const INTERVAL_MS = 5500;
+/** The first slide stays a little longer, so the page is calm while it loads. */
+const FIRST_SLIDE_MS = 10_000;
 const SWIPE_PX = 40;
 
 export function HeroCarousel() {
   const [index, setIndex] = useState(0);
+  const [moved, setMoved] = useState(false);
   const [paused, setPaused] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => false);
   const startX = useRef<number | null>(null);
+  // Slides are added to the page only when they are about to be seen, so the first load carries
+  // one slide, not five. Slide 2 is added once the page has settled, ready for the first advance.
+  const [seen, setSeen] = useState<number[]>([0]);
 
-  const go = (next: number) => setIndex((next + SLIDES.length) % SLIDES.length);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSeen((s) => (s.includes(1) ? s : [...s, 1])), 4000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const go = (next: number) => {
+    const target = (next + SLIDES.length) % SLIDES.length;
+    setIndex(target);
+    setMoved(true);
+    setSeen((s) => [...new Set([...s, target, (target + 1) % SLIDES.length])]);
+  };
 
   const playing = !paused && !userPaused && !reducedMotion;
 
   useEffect(() => {
     if (!playing) return;
-    const id = window.setInterval(() => setIndex((i) => (i + 1) % SLIDES.length), INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [playing, index]);
+    const id = window.setTimeout(() => go(index + 1), moved ? INTERVAL_MS : FIRST_SLIDE_MS);
+    return () => window.clearTimeout(id);
+  }, [playing, index, moved]);
 
   return (
     <section
@@ -126,34 +142,38 @@ export function HeroCarousel() {
                 active ? "opacity-100" : "pointer-events-none opacity-0"
               )}
             >
-              {/* Photo: full-bleed under a dark wash on phones, right half on larger screens. */}
-              <div className="absolute inset-0 md:left-1/2">
-                <ProductImage
-                  src={slide.image}
-                  alt={slide.alt}
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  priority={i === 0}
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-ink/65 md:hidden" />
-                <div className="absolute inset-0 hidden bg-linear-to-r from-[#4d2b45] via-[#4d2b45]/30 to-transparent md:block" />
-              </div>
+              {seen.includes(i) && (
+                <>
+                  {/* Photo: full-bleed under a dark wash on phones, right half on larger screens. */}
+                  <div className="absolute inset-0 md:left-1/2">
+                    <ProductImage
+                      src={slide.image}
+                      alt={slide.alt}
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                      priority={i === 0}
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-ink/65 md:hidden" />
+                    <div className="absolute inset-0 hidden bg-linear-to-r from-[#4d2b45] via-[#4d2b45]/30 to-transparent md:block" />
+                  </div>
 
-              <div className="relative flex h-full min-h-[inherit] flex-col justify-center px-6 py-14 pb-20 sm:px-12 md:w-1/2 lg:px-16">
-                <p className="micro-label text-pink-200">{slide.eyebrow}</p>
-                <Heading className="mt-4 max-w-xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                  {slide.title} <span className="text-pink-300">{slide.highlight}</span>
-                </Heading>
-                <p className="mt-4 max-w-md text-sm text-white/80 sm:text-base">{slide.text}</p>
-                <div className="mt-8">
-                  <Link
-                    href={slide.cta.href}
-                    className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-7 text-sm font-semibold text-ink transition-colors hover:bg-blush"
-                  >
-                    {slide.cta.label} <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-              </div>
+                  <div className="relative flex h-full min-h-[inherit] flex-col justify-center px-6 py-14 pb-20 sm:px-12 md:w-1/2 lg:px-16">
+                    <p className="micro-label text-pink-200">{slide.eyebrow}</p>
+                    <Heading className="mt-4 max-w-xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                      {slide.title} <span className="text-pink-300">{slide.highlight}</span>
+                    </Heading>
+                    <p className="mt-4 max-w-md text-sm text-white/80 sm:text-base">{slide.text}</p>
+                    <div className="mt-8">
+                      <Link
+                        href={slide.cta.href}
+                        className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-7 text-sm font-semibold text-ink transition-colors hover:bg-blush"
+                      >
+                        {slide.cta.label} <ArrowRight className="size-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}

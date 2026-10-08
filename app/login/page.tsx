@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/auth-forms";
 import { PageHeader } from "@/components/shop/page-header";
 import { safeCallbackUrl } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Log in | LUXESTORE" };
+export const metadata: Metadata = { title: "Log in", robots: { index: false, follow: false } };
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (

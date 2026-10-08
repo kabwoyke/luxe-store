@@ -55,7 +55,7 @@ export function NewsletterForm({ tone = "dark" }: { tone?: "dark" | "light" }) {
         <button
           type="submit"
           disabled={status === "sending"}
-          className="h-11 shrink-0 rounded-full bg-linear-to-r from-pink-500 to-purple-600 px-5 text-sm font-semibold text-white disabled:opacity-60"
+          className="h-11 shrink-0 rounded-full bg-linear-to-r from-pink-600 to-purple-700 px-5 text-sm font-semibold text-white disabled:opacity-60"
         >
           Join
         </button>

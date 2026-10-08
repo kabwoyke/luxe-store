@@ -4,7 +4,7 @@ import { SignupForm } from "@/components/auth/auth-forms";
 import { PageHeader } from "@/components/shop/page-header";
 import { safeCallbackUrl } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Create account | LUXESTORE" };
+export const metadata: Metadata = { title: "Create account", robots: { index: false, follow: false } };
 
 export default function SignupPage({ searchParams }: PageProps<"/signup">) {
   return (

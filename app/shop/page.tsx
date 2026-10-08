@@ -6,7 +6,7 @@ import { GridSkeleton } from "@/components/shop/grid-skeleton";
 import { PageContainer, PageHeader } from "@/components/shop/page-header";
 import { ProductBrowser } from "@/components/shop/product-browser";
 
-export const metadata: Metadata = { title: "Shop | LUXESTORE" };
+export const metadata: Metadata = { title: "Shop" };
 
 export default function ShopPage() {
   return (

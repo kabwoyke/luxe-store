@@ -97,3 +97,9 @@
 @utility micro-label {
   @apply text-[10px] font-semibold uppercase tracking-[0.18em] sm:text-xs;
 }
+
+/* Keyboard focus: a clear ring on everything interactive. Zero specificity, so components can still restyle it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-mauve);
+  outline-offset: 2px;
+}

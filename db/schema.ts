@@ -205,3 +205,14 @@ export const settings = mysqlTable("settings", {
   key: varchar("key", { length: 100 }).primaryKey(),
   value: json("value").$type<unknown>().notNull(),
 });
+
+/** Messages sent from the public contact form; admins mark them handled. */
+export const contactMessages = mysqlTable("contact_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 150 }).notNull(),
+  email: varchar("email", { length: 191 }).notNull(),
+  phone: varchar("phone", { length: 30 }),
+  message: text("message").notNull(),
+  handled: boolean("handled").default(false).notNull(),
+  createdAt: createdAt(),
+});

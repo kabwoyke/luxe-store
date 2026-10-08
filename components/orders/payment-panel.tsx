@@ -267,7 +267,7 @@ function NumberForm({
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy || phone.trim() === ""} className="h-12 w-full rounded-full bg-linear-to-r from-pink-500 to-purple-600 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60 sm:w-auto sm:px-8">
+      <button type="submit" disabled={busy || phone.trim() === ""} className="h-12 w-full rounded-full bg-linear-to-r from-pink-600 to-purple-700 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60 sm:w-auto sm:px-8">
         {busy ? "Sending…" : label}
       </button>
     </form>

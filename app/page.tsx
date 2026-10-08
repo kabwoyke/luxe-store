@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowRight, Footprints, Flower2, Gem, ShoppingBag, Sparkles, Wand2 } from "lucide-react";
 import { getAllProducts, getCollections } from "@/lib/catalog";
 import { toCardProduct } from "@/lib/card-product";
 import { CATEGORIES } from "@/lib/product-options";
 import { HeroCarousel } from "@/components/home/hero-carousel";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SITE_NAME, SITE_TAGLINE, siteUrl } from "@/lib/site";
 import { ProductCard } from "@/components/shop/product-card";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
 
@@ -24,6 +27,30 @@ export default async function Home() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-14 px-4 py-6 sm:space-y-20 sm:px-6">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: SITE_NAME,
+              url: siteUrl(),
+              slogan: SITE_TAGLINE,
+              areaServed: "KE",
+            },
+            {
+              "@type": "WebSite",
+              name: SITE_NAME,
+              url: siteUrl(),
+              potentialAction: {
+                "@type": "SearchAction",
+                target: `${siteUrl()}/search?q={search_term_string}`,
+                "query-input": "required name=search_term_string",
+              },
+            },
+          ],
+        }}
+      />
       <HeroCarousel />
 
       <section aria-labelledby="shop-by-category">
@@ -45,8 +72,14 @@ export default async function Home() {
         </ul>
       </section>
 
-      <ProductSection id="new-arrivals" title="New arrivals" href="/collections/new-arrivals" products={newArrivals} />
-      <ProductSection id="best-sellers" title="Best sellers" href="/shop" products={bestSellers} />
+      {/* These sections are already in the HTML. Their own boundary lets React hydrate them in small
+          interruptible pieces after the hero, instead of one long task that blocks the page. */}
+      <Suspense fallback={null}>
+        <ProductSection id="new-arrivals" title="New arrivals" href="/collections/new-arrivals" products={newArrivals} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ProductSection id="best-sellers" title="Best sellers" href="/shop" products={bestSellers} />
+      </Suspense>
 
       {collections.length > 0 && (
         <section aria-labelledby="collections">
@@ -72,6 +105,7 @@ export default async function Home() {
         </section>
       )}
 
+      <Suspense fallback={null}>
       <section className="rounded-3xl border border-border bg-white px-6 py-10 text-center sm:px-12 sm:py-14">
         <h2 className="text-2xl font-bold sm:text-3xl">Join the LUXESTORE list</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-body">
@@ -81,6 +115,7 @@ export default async function Home() {
           <NewsletterForm tone="light" />
         </div>
       </section>
+      </Suspense>
     </div>
   );
 }

@@ -33,6 +33,7 @@ export function ProductImage({
       priority={priority}
       loader={isCloudinary(src) ? cloudinaryLoader : undefined}
       unoptimized={skipOptimiser(src)}
+      fetchPriority={priority ? "high" : undefined}
       draggable={false}
       className={className}
     />

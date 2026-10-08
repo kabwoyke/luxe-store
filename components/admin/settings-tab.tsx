@@ -11,6 +11,22 @@ import { ErrorNote, Loading } from "./ui";
 const field =
   "w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-ink focus:border-mauve focus:outline-none";
 
+type NumberKey = "freeDeliveryThreshold" | "deliveryFee" | "lowStockThreshold";
+type TextKey = "supportEmail" | "supportPhone" | "whatsapp" | "businessAddress";
+
+const NUMBER_ROWS: { name: NumberKey; label: string; hint: string }[] = [
+  { name: "freeDeliveryThreshold", label: "Free delivery from (KES)", hint: "Orders at or above this subtotal ship free. Shown in the announcement bar, cart and product pages." },
+  { name: "deliveryFee", label: "Delivery fee below that (KES)", hint: "Charged on smaller orders." },
+  { name: "lowStockThreshold", label: "Low stock warning (units)", hint: "Options with this many or fewer left appear under Low stock on the overview." },
+];
+
+const TEXT_ROWS: { name: TextKey; label: string; hint: string; type?: string; placeholder?: string }[] = [
+  { name: "supportEmail", label: "Support email", hint: "Shown on the contact page and in the footer.", type: "email", placeholder: "hello@yourstore.co.ke" },
+  { name: "supportPhone", label: "Support phone", hint: "Calls and SMS. Shown on the contact page and in the footer.", type: "tel", placeholder: "+254 712 345 678" },
+  { name: "whatsapp", label: "WhatsApp number", hint: "Adds a \"Chat on WhatsApp\" button on the contact page.", type: "tel", placeholder: "+254 712 345 678" },
+  { name: "businessAddress", label: "Business address", hint: "Shown on the contact page. Leave empty for an online-only shop." },
+];
+
 export function SettingsTab() {
   const { data, error, isPending } = useQuery({
     queryKey: ["admin", "settings"],
@@ -56,30 +72,46 @@ function SettingsForm({ initial }: { initial: Settings }) {
     }
   }
 
-  const rows: { name: keyof Settings; label: string; hint: string }[] = [
-    { name: "freeDeliveryThreshold", label: "Free delivery from (KES)", hint: "Orders at or above this subtotal ship free. Shown in the announcement bar, cart and product pages." },
-    { name: "deliveryFee", label: "Delivery fee below that (KES)", hint: "Charged on smaller orders." },
-    { name: "lowStockThreshold", label: "Low stock warning (units)", hint: "Options with this many or fewer left appear under Low stock on the overview." },
-  ];
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-xl space-y-5 rounded-3xl border border-border bg-white p-5 sm:p-6">
-      <h2 className="text-lg font-bold">Delivery and stock</h2>
-      {rows.map((r) => (
-        <div key={r.name}>
-          <label htmlFor={r.name} className="mb-1 block text-sm text-body">
-            {r.label}
-          </label>
-          <input id={r.name} type="number" inputMode="numeric" min={0} step={1} className={field} {...register(r.name, { valueAsNumber: true })} />
-          {errors[r.name] ? (
-            <p role="alert" className="mt-1 text-xs text-destructive">
-              {errors[r.name]?.message ?? "Enter a whole number."}
-            </p>
-          ) : (
-            <p className="mt-1 text-xs text-muted-ink">{r.hint}</p>
-          )}
-        </div>
-      ))}
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="max-w-xl space-y-8 rounded-3xl border border-border bg-white p-5 sm:p-6">
+      <div className="space-y-5">
+        <h2 className="text-lg font-bold">Delivery and stock</h2>
+        {NUMBER_ROWS.map((r) => (
+          <div key={r.name}>
+            <label htmlFor={r.name} className="mb-1 block text-sm text-body">
+              {r.label}
+            </label>
+            <input id={r.name} type="number" inputMode="numeric" min={0} step={1} className={field} {...register(r.name, { valueAsNumber: true })} />
+            {errors[r.name] ? (
+              <p role="alert" className="mt-1 text-xs text-destructive">
+                {errors[r.name]?.message ?? "Enter a whole number."}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-ink">{r.hint}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-5">
+        <h2 className="text-lg font-bold">Contact details</h2>
+        {TEXT_ROWS.map((r) => (
+          <div key={r.name}>
+            <label htmlFor={r.name} className="mb-1 block text-sm text-body">
+              {r.label}
+            </label>
+            <input id={r.name} type={r.type ?? "text"} placeholder={r.placeholder} className={field} {...register(r.name)} />
+            {errors[r.name] ? (
+              <p role="alert" className="mt-1 text-xs text-destructive">
+                {errors[r.name]?.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-ink">{r.hint}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
       <button
         type="submit"
         disabled={isSubmitting || !isDirty}

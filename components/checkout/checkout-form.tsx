@@ -250,7 +250,7 @@ export function CheckoutForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="h-12 w-full rounded-full bg-linear-to-r from-pink-500 to-purple-600 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="h-12 w-full rounded-full bg-linear-to-r from-pink-600 to-purple-700 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {isSubmitting ? "Placing your order…" : `Pay ${formatKES(total)} with M-Pesa`}
         </button>
