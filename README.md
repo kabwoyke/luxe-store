@@ -13,6 +13,12 @@ Kenyan beauty, fashion and wellness store. Next.js + Tailwind + MySQL + M-Pesa (
 
 Auth.js (credentials, JWT session in an httpOnly cookie). Set `AUTH_SECRET` in `.env.local` (generate one with `npx auth secret` or `openssl rand -base64 32`) and keep `AUTH_URL` equal to the site URL. The first admin is created by the seed from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; everyone who signs up is a customer.
 
+## Content, SEO and contact
+
+- **Information pages** (About, Contact, FAQ, Delivery, Returns, Privacy, Terms) are plain TSX in `app/<page>/page.tsx`: edit the wording there. The delivery fee and free-delivery threshold in them come from Admin > Settings. Have the privacy policy, terms and returns policy reviewed to match how you actually operate.
+- **Contact details** (support email, phone, WhatsApp, address) are set in Admin > Settings and show on the contact page and in the footer. Messages from the contact form appear in Admin > Messages.
+- **SEO:** every page has its own title, description and social preview. `NEXT_PUBLIC_SITE_URL` (defaults to `AUTH_URL`) must be the real public address in production, because canonical links, `/sitemap.xml` and `/robots.txt` are built from it. Product pages carry Product, price and rating structured data, and the FAQ carries FAQPage data. Checkout, accounts, search results and the admin are marked noindex.
+
 ## Admin dashboard
 
 Log in with the seeded admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) and open `/admin`: Overview (revenue, orders, stock, low stock, revenue by category, CSV exports), Products (create, edit, delete with colour x size options and photos per colour), Orders (items with `Color / Size`, status updates), Customers and Settings (delivery fee, free-delivery threshold, low-stock warning). Admin pages and every `/api/admin/*` route re-check the admin flag in the database on each request.

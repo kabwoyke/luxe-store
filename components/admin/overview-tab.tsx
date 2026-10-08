@@ -62,7 +62,7 @@ export function OverviewTab() {
           {data.lowStock.length === 0 ? (
             <p className="text-sm text-body">Nothing is running low.</p>
           ) : (
-            <ul className="max-h-72 divide-y divide-border overflow-y-auto">
+            <ul className="max-h-72 divide-y divide-border overflow-y-auto" tabIndex={0} aria-label="Low stock options, scrollable">
               {data.lowStock.map((item, i) => (
                 <li key={`${item.productId}-${item.label}-${i}`} className="flex items-center justify-between gap-3 py-2 text-sm">
                   <span className="min-w-0">

@@ -41,7 +41,7 @@ export function MessagesTab() {
       ) : (
         <ul className="space-y-3">
           {data.messages.map((m) => (
-            <li key={m.id} className={cn("rounded-3xl border bg-white p-5", m.handled ? "border-border opacity-75" : "border-mauve/40")}>
+            <li key={m.id} className={cn("rounded-3xl border bg-white p-5", m.handled ? "border-border bg-page" : "border-mauve/40")}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-ink">{m.name}</p>

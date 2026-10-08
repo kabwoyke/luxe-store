@@ -21,14 +21,8 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   alternates: { canonical: "./" },
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    locale: "en_KE",
-    title: DEFAULT_TITLE,
-    description: SITE_DESCRIPTION,
-  },
-  twitter: { card: "summary_large_image", title: DEFAULT_TITLE, description: SITE_DESCRIPTION },
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_KE" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
