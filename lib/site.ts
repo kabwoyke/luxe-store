@@ -1,7 +1,7 @@
 export const SITE_NAME = "LUXESTORE";
 export const SITE_TAGLINE = "Your everyday luxury, curated for you.";
 export const SITE_DESCRIPTION =
-  "Shop wigs, shoes, handbags, beauty and self-care online in Kenya. Free delivery over KES 5,000 and fast M-Pesa checkout.";
+  "Shop wigs, shoes, handbags, beauty and self-care online in Kenya. Delivery across Kenya and fast M-Pesa checkout.";
 
 /** Public address of the site, used for canonical links, the sitemap and social previews. */
 export function siteUrl(): string {

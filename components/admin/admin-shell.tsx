@@ -24,6 +24,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={client}>
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <p className="micro-label text-mauve">Admin</p>
+        <h1 className="sr-only">Admin: {TABS.find((t) => (t.href === "/admin" ? pathname === "/admin" : pathname.startsWith(t.href)))?.label ?? "Dashboard"}</h1>
         <nav aria-label="Admin sections" className="no-scrollbar mt-2 mb-6 flex gap-1 overflow-x-auto rounded-full bg-blush p-1.5">
           {TABS.map((tab) => {
             const active = tab.href === "/admin" ? pathname === "/admin" : pathname.startsWith(tab.href);
