@@ -1,0 +1,8 @@
+import type { Metadata } from "next";
+import { OrdersTab } from "@/components/admin/orders-tab";
+
+export const metadata: Metadata = { title: "Orders | LUXESTORE admin" };
+
+export default function Page() {
+  return <OrdersTab />;
+}

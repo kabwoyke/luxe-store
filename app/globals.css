@@ -1,0 +1,99 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-outfit);
+  --font-display: var(--font-outfit);
+
+  /* LUXESTORE brand tokens */
+  --color-ink: #2d1a2d;
+  --color-ink-hover: #46233d;
+  --color-mauve: #8f4464;
+  --color-mauve-dark: #6b3558;
+  --color-plum-soft: #9b5e7a;
+  --color-body: #5d4c56;
+  --color-muted-ink: #7b6070;
+  --color-blush: #fff0f6;
+  --color-page: #fffafc;
+  --color-warn: #c06b2a;
+
+  /* shadcn semantic tokens, mapped to the brand */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #fffafc;
+  --foreground: #2d1a2d;
+  --card: #ffffff;
+  --card-foreground: #2d1a2d;
+  --popover: #fffafc;
+  --popover-foreground: #2d1a2d;
+  --primary: #2d1a2d;
+  --primary-foreground: #ffffff;
+  --secondary: #fff0f6;
+  --secondary-foreground: #2d1a2d;
+  --muted: #fff0f6;
+  --muted-foreground: #7b6070;
+  --accent: #fff0f6;
+  --accent-foreground: #2d1a2d;
+  --destructive: #c0392b;
+  --border: #f0dfe8;
+  --input: #f0dfe8;
+  --ring: #8f4464;
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-page text-body overflow-x-hidden;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading text-ink;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility micro-label {
+  @apply text-[10px] font-semibold uppercase tracking-[0.18em] sm:text-xs;
+}
