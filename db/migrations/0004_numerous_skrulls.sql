@@ -1,0 +1,1 @@
+ALTER TABLE `payments` ADD CONSTRAINT `payments_receipt_idx` UNIQUE(`mpesa_receipt`);

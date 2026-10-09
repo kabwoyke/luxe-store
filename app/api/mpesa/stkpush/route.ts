@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { startPayment } from "@/lib/payments";
 import { normalizePhone } from "@/lib/phone";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { requireApiUser } from "@/lib/session";
 
 const bodySchema = z.object({
@@ -17,13 +17,9 @@ export async function POST(request: Request) {
   const user = await requireApiUser();
   if (user instanceof Response) return user;
 
+  // Per user and per order, so one stuck order cannot spam a customer's phone with prompts.
   const limit = rateLimit(`stkpush:${user.id}`, 5, 60_000);
-  if (!limit.ok) {
-    return Response.json(
-      { error: "Too many payment attempts. Please wait a moment and try again." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-    );
-  }
+  if (!limit.ok) return tooManyRequests("Too many payment attempts. Please wait a moment and try again.", limit.retryAfterSeconds);
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request." }, { status: 400 });

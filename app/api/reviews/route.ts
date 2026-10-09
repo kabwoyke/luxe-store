@@ -3,8 +3,12 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { products, reviews } from "@/db/schema";
 import { reviewSchema } from "@/lib/schemas/review";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limit = rateLimit(`review:${clientIp(request.headers)}`, 5, 10 * 60_000);
+  if (!limit.ok) return tooManyRequests("Too many reviews in a short time. Please try again later.", limit.retryAfterSeconds);
+
   const parsed = reviewSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return Response.json(

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getOrderFor } from "@/lib/orders";
 import { getPaymentStatus } from "@/lib/payments";
+import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { requireApiUser } from "@/lib/session";
 
 /**
@@ -10,6 +11,10 @@ import { requireApiUser } from "@/lib/session";
 export async function GET(_request: Request, ctx: RouteContext<"/api/orders/[id]/payment">) {
   const user = await requireApiUser();
   if (user instanceof Response) return user;
+
+  // The page polls every 3s (20 a minute); this leaves room for several tabs but stops hammering.
+  const limit = rateLimit(`pay-status:${user.id}`, 60, 60_000);
+  if (!limit.ok) return tooManyRequests("Too many requests. Please slow down.", limit.retryAfterSeconds);
 
   const id = z.coerce.number().int().positive().safeParse((await ctx.params).id);
   if (!id.success) return Response.json({ error: "Order not found." }, { status: 404 });
