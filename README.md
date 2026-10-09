@@ -12,6 +12,7 @@ Kenyan beauty, fashion and wellness store. Next.js + Tailwind + MySQL + M-Pesa (
 
 ## Accounts
 
+
 Auth.js (credentials, JWT session in an httpOnly cookie). Set `AUTH_SECRET` in `.env.local` (generate one with `npx auth secret` or `openssl rand -base64 32`) and keep `AUTH_URL` equal to the site URL. The first admin is created by the seed from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; everyone who signs up is a customer.
 
 ## Content, SEO and contact
