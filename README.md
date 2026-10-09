@@ -6,8 +6,9 @@ Kenyan beauty, fashion and wellness store. Next.js + Tailwind + MySQL + M-Pesa (
 
 1. `npm install`
 2. Create the database and user: edit the password in `db/create-database.sql`, then run it in your local MySQL 8 / MariaDB 10.6+ (XAMPP, Laragon, WAMP, Workbench, or the `mysql` CLI).
-3. Copy `.env.example` to `.env.local`, fill in values (make `DATABASE_URL` match the password you chose).
-4. `npm run dev`
+3. Copy `.env.example` to `.env.local`, fill in values (make `DATABASE_URL` match the password you chose; set `AUTH_SECRET` to a random string of 32+ characters and `ADMIN_EMAIL` / `ADMIN_PASSWORD` for the first admin).
+4. `npm run db:migrate` to create the tables, then `npm run db:seed` to add the admin, stores, demo catalogue and collections.
+5. `npm run dev`, then open http://localhost:3000. M-Pesa stays off until the `MPESA_*` values are filled in (see below).
 
 ## Accounts
 
