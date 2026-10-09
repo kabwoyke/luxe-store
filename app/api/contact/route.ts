@@ -1,18 +1,12 @@
 import { db } from "@/db";
 import { contactMessages } from "@/db/schema";
-import { rateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { contactSchema } from "@/lib/schemas/contact";
 
 /** Public contact form. Stored for the admin to read; limited per visitor and guarded by a honeypot. */
 export async function POST(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const limit = rateLimit(`contact:${ip}`, 5, 10 * 60_000);
-  if (!limit.ok) {
-    return Response.json(
-      { error: "You have sent several messages already. Please try again in a few minutes." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-    );
-  }
+  const limit = rateLimit(`contact:${clientIp(request.headers)}`, 5, 10 * 60_000);
+  if (!limit.ok) return tooManyRequests("You have sent several messages already. Please try again in a few minutes.", limit.retryAfterSeconds);
 
   const parsed = contactSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

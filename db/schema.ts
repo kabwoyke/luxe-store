@@ -192,6 +192,8 @@ export const payments = mysqlTable(
   (t) => [
     uniqueIndex("payments_checkout_request_idx").on(t.checkoutRequestId),
     index("payments_order_idx").on(t.orderId),
+    // One M-Pesa receipt can only ever pay for one thing (NULLs are allowed many times).
+    uniqueIndex("payments_receipt_idx").on(t.mpesaReceipt),
   ]
 );
 

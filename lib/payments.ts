@@ -1,5 +1,5 @@
 import { revalidateTag } from "next/cache";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { inventoryLogs, orderItems, orders, payments, products } from "@/db/schema";
 import { MpesaApiError, MpesaConfigError, stkPush, stkQuery } from "@/lib/mpesa/daraja";
@@ -14,6 +14,7 @@ import { sumVariantStock, type Variant } from "@/lib/product-options";
  * "needs-review" is written. That combination (paid + pending) means "refund or restock".
  */
 
+const PROMPT_COOLDOWN_MS = 30_000;
 const QUERY_AFTER_MS = 20_000;
 const QUERY_EVERY_MS = 10_000;
 const CANCELLED_BY_USER = 1032;
@@ -103,6 +104,22 @@ export async function startPayment(
     };
   }
 
+  // A double tap or a second tab must not send the customer a second prompt for the same order.
+  const [recent] = await db
+    .select()
+    .from(payments)
+    .where(and(eq(payments.orderId, order.id), eq(payments.status, "pending")))
+    .orderBy(desc(payments.id))
+    .limit(1);
+  if (recent && Date.now() - recent.createdAt.getTime() < PROMPT_COOLDOWN_MS) {
+    return {
+      ok: true,
+      paymentId: recent.id,
+      checkoutRequestId: recent.checkoutRequestId,
+      message: "A payment prompt was just sent. Check your phone and enter your M-Pesa PIN.",
+    };
+  }
+
   let result;
   try {
     // The amount always comes from the order row, never from the request.
@@ -137,6 +154,8 @@ export async function startPayment(
 
 export type PaymentOutcome =
   | "unknown"
+  | "rejected"
+  | "receipt-reused"
   | "already-final"
   | "failed"
   | "cancelled"
@@ -147,6 +166,8 @@ export type PaymentOutcome =
 
 export type PaymentResultInput = {
   checkoutRequestId: string;
+  /** Present in callbacks; when given it must match the one we stored at STK Push time. */
+  merchantRequestId?: string;
   resultCode: number;
   resultDesc: string;
   /** Present in callbacks, absent when the result comes from an STK query. */
@@ -169,6 +190,7 @@ export async function applyPaymentResult(input: PaymentResultInput): Promise<Pay
       .where(eq(payments.checkoutRequestId, input.checkoutRequestId))
       .for("update");
     if (!payment) return "unknown";
+    if (input.merchantRequestId && input.merchantRequestId !== payment.merchantRequestId) return "rejected";
 
     if (payment.status !== "pending") {
       // A late callback may still carry the receipt that an STK query could not provide.
@@ -193,6 +215,26 @@ export async function applyPaymentResult(input: PaymentResultInput): Promise<Pay
         .set({ paymentStatus: status })
         .where(and(eq(orders.id, payment.orderId), eq(orders.paymentStatus, "pending")));
       return status;
+    }
+
+    // A receipt number that already paid something else is a replayed or forged callback.
+    if (input.receipt) {
+      const [used] = await tx
+        .select({ id: payments.id })
+        .from(payments)
+        .where(and(eq(payments.mpesaReceipt, input.receipt), ne(payments.id, payment.id)))
+        .limit(1);
+      if (used) {
+        await tx
+          .update(payments)
+          .set({
+            status: "failed",
+            resultCode: input.resultCode,
+            resultDesc: `Receipt ${input.receipt} is already recorded on payment #${used.id}. Needs manual review.`.slice(0, 255),
+          })
+          .where(eq(payments.id, payment.id));
+        return "receipt-reused";
+      }
     }
 
     const [order] = await tx.select().from(orders).where(eq(orders.id, payment.orderId)).for("update");

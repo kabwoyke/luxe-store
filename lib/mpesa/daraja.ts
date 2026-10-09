@@ -74,6 +74,14 @@ export function getMpesaConfig(env: NodeJS.ProcessEnv = process.env): MpesaConfi
     throw new MpesaConfigError("MPESA_CALLBACK_SECRET is required in production (and must match ?token= in MPESA_CALLBACK_URL)");
   }
 
+  const transactionType = env.MPESA_TRANSACTION_TYPE?.trim() || "CustomerPayBillOnline";
+  if (transactionType !== "CustomerPayBillOnline" && transactionType !== "CustomerBuyGoodsOnline") {
+    throw new MpesaConfigError("MPESA_TRANSACTION_TYPE must be CustomerPayBillOnline (Paybill) or CustomerBuyGoodsOnline (Till)");
+  }
+  if (!/^\d{5,7}$/.test(required.MPESA_SHORTCODE!.trim()) || (env.MPESA_PARTY_B?.trim() && !/^\d{5,7}$/.test(env.MPESA_PARTY_B.trim()))) {
+    throw new MpesaConfigError("MPESA_SHORTCODE and MPESA_PARTY_B must be numbers (5 to 7 digits)");
+  }
+
   return {
     // MPESA_BASE_URL exists so tests can point at a mock Daraja; leave it unset in real deployments.
     baseUrl: env.MPESA_BASE_URL?.trim() || BASE_URLS[mode],
@@ -82,7 +90,7 @@ export function getMpesaConfig(env: NodeJS.ProcessEnv = process.env): MpesaConfi
     shortcode: required.MPESA_SHORTCODE!.trim(),
     partyB: env.MPESA_PARTY_B?.trim() || required.MPESA_SHORTCODE!.trim(),
     passkey: required.MPESA_PASSKEY!.trim(),
-    transactionType: env.MPESA_TRANSACTION_TYPE?.trim() || "CustomerPayBillOnline",
+    transactionType,
     callbackUrl: required.MPESA_CALLBACK_URL!.trim(),
   };
 }

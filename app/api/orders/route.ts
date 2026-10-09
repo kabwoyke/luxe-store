@@ -1,5 +1,6 @@
 import { createOrder, listOrdersForUser } from "@/lib/orders";
 import { createOrderSchema } from "@/lib/schemas/order";
+import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { requireApiUser } from "@/lib/session";
 
 /** The signed-in user's orders, newest first. */
@@ -14,6 +15,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await requireApiUser();
   if (user instanceof Response) return user;
+
+  const limit = rateLimit(`order-create:${user.id}`, 10, 10 * 60_000);
+  if (!limit.ok) return tooManyRequests("Too many orders in a short time. Please try again in a few minutes.", limit.retryAfterSeconds);
 
   const parsed = createOrderSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
