@@ -184,6 +184,8 @@ export const payments = mysqlTable(
     resultCode: int("result_code"),
     resultDesc: varchar("result_desc", { length: 255 }),
     mpesaReceipt: varchar("mpesa_receipt", { length: 50 }),
+    /** M-Pesa TransactionDate from the callback (when the customer actually paid), stored in UTC. */
+    paidAt: timestamp("paid_at"),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
   },

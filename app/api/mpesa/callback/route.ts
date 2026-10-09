@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       resultCode: cb.ResultCode,
       resultDesc: cb.ResultDesc,
       receipt: details.receipt,
+      paidAt: details.paidAt,
       amount: details.amount,
     });
     console.log("[mpesa] callback outcome:", cb.CheckoutRequestID, outcome);
