@@ -151,6 +151,8 @@ export type PaymentResultInput = {
   resultDesc: string;
   /** Present in callbacks, absent when the result comes from an STK query. */
   receipt?: string;
+  /** M-Pesa TransactionDate, present in callbacks only. */
+  paidAt?: Date;
   amount?: number;
 };
 
@@ -171,7 +173,10 @@ export async function applyPaymentResult(input: PaymentResultInput): Promise<Pay
     if (payment.status !== "pending") {
       // A late callback may still carry the receipt that an STK query could not provide.
       if (payment.status === "paid" && !payment.mpesaReceipt && input.receipt) {
-        await tx.update(payments).set({ mpesaReceipt: input.receipt }).where(eq(payments.id, payment.id));
+        await tx
+          .update(payments)
+          .set({ mpesaReceipt: input.receipt, paidAt: input.paidAt ?? payment.paidAt })
+          .where(eq(payments.id, payment.id));
       }
       return "already-final";
     }
@@ -200,6 +205,7 @@ export async function applyPaymentResult(input: PaymentResultInput): Promise<Pay
           resultCode: input.resultCode,
           resultDesc: `Amount mismatch: received ${received}, expected ${order?.total ?? "?"}. Needs manual review.`,
           mpesaReceipt: input.receipt ?? null,
+          paidAt: input.paidAt ?? null,
         })
         .where(eq(payments.id, payment.id));
       return "amount-mismatch";
@@ -213,6 +219,7 @@ export async function applyPaymentResult(input: PaymentResultInput): Promise<Pay
           resultCode: 0,
           resultDesc: "Duplicate payment: the order was already paid. Refund needed.",
           mpesaReceipt: input.receipt ?? null,
+          paidAt: input.paidAt ?? null,
         })
         .where(eq(payments.id, payment.id));
       return "duplicate";
@@ -233,7 +240,7 @@ export async function applyPaymentResult(input: PaymentResultInput): Promise<Pay
       .for("update");
 
     const plan = planDeduction(items, rows);
-    const paidFields = { status: "paid" as const, resultCode: 0, resultDesc: input.resultDesc.slice(0, 255), mpesaReceipt: input.receipt ?? null };
+    const paidFields = { status: "paid" as const, resultCode: 0, resultDesc: input.resultDesc.slice(0, 255), mpesaReceipt: input.receipt ?? null, paidAt: input.paidAt ?? null };
 
     if (plan.problems.length > 0) {
       await tx.update(payments).set(paidFields).where(eq(payments.id, payment.id));
@@ -312,6 +319,7 @@ export type PaymentStatusView = {
     resultCode: number | null;
     resultDesc: string | null;
     mpesaReceipt: string | null;
+    paidAt: Date | null;
     createdAt: Date;
   };
 };
@@ -340,6 +348,7 @@ export async function getPaymentStatus(orderId: number): Promise<PaymentStatusVi
           resultCode: payment.resultCode,
           resultDesc: payment.resultDesc,
           mpesaReceipt: payment.mpesaReceipt,
+          paidAt: payment.paidAt,
           createdAt: payment.createdAt,
         }
       : null,
@@ -349,4 +358,63 @@ export async function getPaymentStatus(orderId: number): Promise<PaymentStatusVi
 /** Milliseconds since a moment, for showing how long a prompt has been waiting. */
 export function msSince(date: Date): number {
   return Date.now() - date.getTime();
+}
+
+/* ---------- admin actions ---------- */
+
+export type AdminPaymentResult = { ok: true; message: string } | { ok: false; status: number; error: string };
+
+/** Asks Daraja right now (no throttle) what happened to a pending prompt and applies the answer. */
+export async function adminRequeryPayment(paymentId: number): Promise<AdminPaymentResult> {
+  const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId));
+  if (!payment) return { ok: false, status: 404, error: "Payment not found." };
+  if (payment.status !== "pending") return { ok: false, status: 409, error: `This payment is already ${payment.status}.` };
+
+  try {
+    const result = await stkQuery(payment.checkoutRequestId);
+    if (result.state === "pending") return { ok: true, message: "Still waiting for the customer to enter their PIN." };
+    const outcome = await applyPaymentResult({
+      checkoutRequestId: payment.checkoutRequestId,
+      resultCode: result.resultCode,
+      resultDesc: result.resultDesc,
+    });
+    return { ok: true, message: `M-Pesa says: ${result.resultDesc || "done"} (${outcome}).` };
+  } catch (err) {
+    if (err instanceof MpesaConfigError || err instanceof MpesaApiError) {
+      return { ok: false, status: 502, error: err.message };
+    }
+    throw err;
+  }
+}
+
+/**
+ * For money that arrived but whose callback never did (an STK query cannot return the receipt):
+ * the admin supplies the M-Pesa receipt code from the statement. Stock is deducted exactly as for a callback.
+ */
+export async function adminMarkPaid(paymentId: number, receipt: string): Promise<AdminPaymentResult> {
+  const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId));
+  if (!payment) return { ok: false, status: 404, error: "Payment not found." };
+  if (payment.status === "paid") return { ok: false, status: 409, error: "This payment is already paid." };
+
+  const [taken] = await db.select({ id: payments.id }).from(payments).where(eq(payments.mpesaReceipt, receipt)).limit(1);
+  if (taken) return { ok: false, status: 409, error: `Receipt ${receipt} is already recorded on payment #${taken.id}.` };
+
+  // applyPaymentResult only acts on pending payments, so reopen this one first and put it back if nothing was applied.
+  await db.update(payments).set({ status: "pending" }).where(eq(payments.id, payment.id));
+  const outcome = await applyPaymentResult({
+    checkoutRequestId: payment.checkoutRequestId,
+    resultCode: 0,
+    resultDesc: "Marked as paid by an admin.",
+    receipt,
+  });
+  if (outcome !== "paid" && outcome !== "paid-needs-review" && outcome !== "duplicate") {
+    await db
+      .update(payments)
+      .set({ status: payment.status, resultCode: payment.resultCode, resultDesc: payment.resultDesc, mpesaReceipt: payment.mpesaReceipt })
+      .where(eq(payments.id, payment.id));
+    return { ok: false, status: 409, error: `Could not mark as paid (${outcome}).` };
+  }
+  const note =
+    outcome === "paid-needs-review" ? " Stock was short, so the order needs review." : outcome === "duplicate" ? " The order was already paid: refund needed." : "";
+  return { ok: true, message: `Payment marked as paid.${note}` };
 }

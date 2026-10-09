@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
@@ -17,6 +18,8 @@ export type CurrentUser = {
 };
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
+  // auth() reads the clock before touching request data; opt out of prerendering first.
+  await connection();
   const session = await auth();
   const id = Number(session?.user?.id);
   if (!Number.isInteger(id)) return null;

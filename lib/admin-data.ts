@@ -1,6 +1,7 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, or, sql } from "drizzle-orm";
+import type { AnyMySqlColumn } from "drizzle-orm/mysql-core";
 import { db } from "@/db";
-import { orderItems, orders, products, users } from "@/db/schema";
+import { orderItems, orders, payments, products, users } from "@/db/schema";
 import { attachItems, type OrderWithItems } from "@/lib/orders";
 import { variantLabel } from "@/lib/product-options";
 import { getSettings } from "@/lib/settings";
@@ -224,3 +225,62 @@ export async function exportCsv(type: "orders" | "products" | "customers"): Prom
     list.map((c) => [c.id, c.name, c.email, c.isAdmin ? "yes" : "no", c.createdAt, c.orders, c.spent])
   );
 }
+
+/* ---------- payments ---------- */
+
+export type AdminPayment = typeof payments.$inferSelect & {
+  orderTotal: number;
+  orderStatus: string;
+  orderPaymentStatus: string;
+  customerName: string;
+  customerEmail: string;
+};
+
+/** Payments newest first. `q` matches receipt, phone, Daraja request ids, order id, customer name or email. */
+export async function listAdminPayments(opts: { q?: string; status?: string } = {}): Promise<AdminPayment[]> {
+  const q = opts.q?.trim();
+  const like = q ? `%${q.replace(/[!%_]/g, "!$&")}%` : null;
+  const digits = q?.replace(/^#/, "");
+  const rows = await db
+    .select({
+      payment: payments,
+      orderTotal: orders.total,
+      orderStatus: orders.status,
+      orderPaymentStatus: orders.paymentStatus,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+    })
+    .from(payments)
+    .innerJoin(orders, eq(orders.id, payments.orderId))
+    .innerJoin(users, eq(users.id, orders.userId))
+    .where(
+      and(
+        opts.status ? eq(payments.status, opts.status) : undefined,
+        like
+          ? or(
+              like_(payments.mpesaReceipt, like),
+              like_(payments.phone, like),
+              like_(payments.checkoutRequestId, like),
+              like_(payments.merchantRequestId, like),
+              like_(users.email, like),
+              sql`concat(${users.firstName}, ' ', ${users.lastName}) like ${like} escape '!'`,
+              digits && /^\d+$/.test(digits) ? eq(payments.orderId, Number(digits)) : undefined
+            )
+          : undefined
+      )
+    )
+    .orderBy(desc(payments.createdAt), desc(payments.id))
+    .limit(300);
+
+  return rows.map((r) => ({
+    ...r.payment,
+    orderTotal: r.orderTotal,
+    orderStatus: r.orderStatus,
+    orderPaymentStatus: r.orderPaymentStatus,
+    customerName: `${r.firstName} ${r.lastName}`.trim(),
+    customerEmail: r.email,
+  }));
+}
+
+const like_ = (column: AnyMySqlColumn, pattern: string) => sql`${column} like ${pattern} escape '!'`;

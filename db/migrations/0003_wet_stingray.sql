@@ -1,0 +1,1 @@
+ALTER TABLE `payments` ADD `paid_at` timestamp;
